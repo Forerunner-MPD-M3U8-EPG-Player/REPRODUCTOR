@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang=en>
+<meta charset=UTF-8>
+<meta content="width=device-width,initial-scale=1" name=viewport>
+<meta content=no-referrer name=referrer>
+<link href=data:image/x-icon;, rel=icon>
+<title>github.com/dbghelp</title>
+<link href=https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.11.2/controls.min.css rel=stylesheet>
+<link href=https://dbghelp.github.io/xml-epg.css rel=stylesheet>
+<style>
+/* Estilos Base: Video Full-Screen */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a1a; /* Fondo más oscuro */
+    color: #f1f1f1;
+    display: flex; /* Mantenemos flex para la composición */
+    height: 100vh;
+    overflow: hidden; /* Evita barras de desplazamiento innecesarias */
+}
+
+/* Contenedor de Video: Siempre en el frente */
+#video-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    z-index: 1; /* Detrás del menú deslizable */
+    width: 100%;
+    height: 100%;
+}
+
+#video {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+}
+
+/* Lista de Reproducción (Menú Deslizable) */
+#playlist {
+    position: fixed;
+    top: 0;
+    left: 0; 
+    width: 300px; /* Ancho más delgado */
+    height: 100%;
+    background-color: rgba(35, 35, 35, 0.95); /* Semi-transparente */
+    color: #f1f1f1;
+    overflow-y: auto;
+    border-right: 2px solid #00c853; /* Borde de acento verde */
+    padding: 20px 10px;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    z-index: 10; /* Siempre encima del video */
+    transform: translateX(-100%); /* Oculta por defecto */
+    transition: transform 0.3s ease-in-out;
+}
+
+#playlist.active {
+    transform: translateX(0); /* Muestra cuando está activo */
+}
+
+/* Estilos de Control y Entrada */
+#search-input, #url-input {
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #333;
+    color: #f1f1f1;
+    font-size: 0.9em;
+    box-sizing: border-box;
+    width: 100%; /* Ajuste para entradas */
+    display: block; /* Asegura que la búsqueda se muestre correctamente */
+}
+
+#fetch-button, #epg-button {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #00c853; /* Color de acento verde */
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.2s ease;
+    width: 100%; /* Asegura que los botones sean de ancho completo */
+}
+
+#fetch-button:hover, #epg-button:hover {
+    background-color: #00a845;
+}
+
+/* Botón de Subida (Upload) */
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+}
+#upload-button {
+    padding: 10px;
+    background-color: #00c853;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: background-color 0.2s ease;
+    width: 50px;
+    margin-left: 5px;
+    margin-bottom: 0; /* Ajuste para el contenedor flex */
+}
+#upload-button:hover {
+    background-color: #00a845;
+}
+
+/* Estilos de Lista de Canales */
+#video-list{list-style:none;padding:0;margin:0}
+#video-list li {
+    padding: 10px 15px;
+    margin: 3px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color .2s ease, transform .1s ease;
+    display: flex;
+    align-items: center;
+}
+#video-list li:hover {
+    background-color: #00c853; /* Resaltado verde */
+    color: #1a1a1a;
+    transform: none; 
+}
+#video-list img {
+    width: 40px; /* Logo más pequeño */
+    height: 40px;
+    margin-right: 10px;
+    border-radius: 3px;
+    object-fit: contain;
+    border: 1px solid #444;
+}
+
+.video-title{font-size:1em}
+.active {
+    background-color: #00a845; /* Canal activo */
+    color: #fff;
+}
+
+/* Overlay y EPG */
+#overlay{display:none;flex-direction:column;align-items:center;overflow-y:auto;z-index:2;flex:1}
+#epg-container{display:none;z-index:1000;position:fixed;width:100%;height:100%;overflow-y:scroll;overflow-x:scroll;background-color:rgba(26, 26, 26, 0.95)}
+#search-input{display:none}
+
+/* Botón de Menú */
+#menu-toggle-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 5000;
